@@ -1,0 +1,104 @@
+import random
+
+def initialize_grid():
+    """Initialize the 2x2 grid with two random tiles."""
+    grid = [[0, 0], [0, 0]]
+    add_random_tile(grid)
+    add_random_tile(grid)
+    return grid
+
+def add_random_tile(grid):
+    """Add a new tile (2 or 4) to a random empty cell."""
+    empty_cells = [(r, c) for r in range(2) for c in range(2) if grid[r][c] == 0]
+    if empty_cells:
+        r, c = random.choice(empty_cells)
+        grid[r][c] = 2 if random.random() < 0.9 else 4
+
+def print_grid(grid):
+    """Print the grid."""
+    for row in grid:
+        print("\t".join(map(str, row)))
+    print()
+
+def slide_and_merge(row):
+    """Slide and merge a single row."""
+    # Slide non-zero tiles to the left
+    new_row = [tile for tile in row if tile != 0]
+    # Merge adjacent tiles if they're the same
+    for i in range(len(new_row) - 1):
+        if new_row[i] == new_row[i + 1]:
+            new_row[i] *= 2
+            new_row[i + 1] = 0
+    # Slide again after merging
+    new_row = [tile for tile in new_row if tile != 0]
+    return new_row + [0] * (2 - len(new_row))
+
+def move(grid, direction):
+    """Move the grid in the given direction."""
+    if direction == 'left':
+        for r in range(2):
+            grid[r] = slide_and_merge(grid[r])
+    elif direction == 'right':
+        for r in range(2):
+            grid[r] = slide_and_merge(grid[r][::-1])[::-1]
+    elif direction == 'up':
+        for c in range(2):
+            column = [grid[r][c] for r in range(2)]
+            column = slide_and_merge(column)
+            for r in range(2):
+                grid[r][c] = column[r]
+    elif direction == 'down':
+        for c in range(2):
+            column = [grid[r][c] for r in range(2)][::-1]
+            column = slide_and_merge(column)[::-1]
+            for r in range(2):
+                grid[r][c] = column[r]
+
+def is_game_over(grid):
+    """Check if there are no valid moves left."""
+    for r in range(2):
+        for c in range(2):
+            if grid[r][c] == 0:
+                return False
+            if r > 0 and grid[r][c] == grid[r - 1][c]:
+                return False
+            if c > 0 and grid[r][c] == grid[r][c - 1]:
+                return False
+    return True
+
+def has_won(grid):
+    """Check if the player has reached 2048."""
+    return any(grid[r][c] == 2048 for r in range(2) for c in range(2))
+
+def main():
+    """Run the 2x2 2048 game."""
+    grid = initialize_grid()
+    print("Welcome to 2x2 2048!")
+    print("Use 'w', 'a', 's', 'd' to move (up, left, down, right). Type 'q' to quit.\n")
+
+    while True:
+        print_grid(grid)
+
+        if has_won(grid):
+            print("Congratulations! You reached 2048!")
+            break
+
+        if is_game_over(grid):
+            print("Game Over! No more valid moves.")
+            break
+
+        move_direction = input("Move (w/a/s/d): ").lower()
+        if move_direction == 'q':
+            print("Thanks for playing!")
+            break
+
+        if move_direction in ['w', 'a', 's', 'd']:
+            old_grid = [row[:] for row in grid]
+            move(grid, {'w': 'up', 'a': 'left', 's': 'down', 'd': 'right'}[move_direction])
+            if grid != old_grid:
+                add_random_tile(grid)
+        else:
+            print("Invalid input. Please use 'w', 'a', 's', 'd' or 'q'.")
+
+if __name__ == "__main__":
+    main()
